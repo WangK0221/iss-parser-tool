@@ -1,0 +1,70 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+from pathlib import Path
+import sys
+
+from PyInstaller.utils.hooks import collect_system_data_files
+
+
+PYTHON_BASE = Path(sys.base_prefix)
+DLL_DIR = PYTHON_BASE / "DLLs"
+TCL_DIR = PYTHON_BASE / "tcl"
+
+
+hiddenimports = [
+    "tkinter",
+    "tkinter.ttk",
+    "tkinter.filedialog",
+    "tkinter.messagebox",
+    "tkinter.simpledialog",
+    "tkinter.commondialog",
+    "tkinter.dialog",
+    "tkinter.constants",
+]
+
+binaries = [
+    (str(DLL_DIR / "_tkinter.pyd"), "."),
+    (str(DLL_DIR / "tcl86t.dll"), "."),
+    (str(DLL_DIR / "tk86t.dll"), "."),
+]
+
+datas = []
+datas += collect_system_data_files(str(TCL_DIR / "tcl8.6"), destdir="_tcl_data")
+datas += collect_system_data_files(str(TCL_DIR / "tk8.6"), destdir="_tk_data")
+
+
+a = Analysis(
+    ["license_generator.py"],
+    pathex=[],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
+    hookspath=["pyinstaller_hooks"],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name="LicenseGenerator",
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=["_tkinter.pyd", "tcl86t.dll", "tk86t.dll"],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)

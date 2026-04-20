@@ -1,0 +1,32 @@
+{
+  "fields": [
+    "station",
+    "material_code",
+    "material_spec",
+    "refdes",
+    "package",
+    "feeder",
+    "quantity"
+  ],
+  "headers": {
+    "station": "站位",
+    "material_code": "物料编码",
+    "material_spec": "物料规格",
+    "refdes": "位号",
+    "package": "包装",
+    "feeder": "飞达",
+    "quantity": "用量"
+  },
+  "layout": {
+    "line_label": "线体",
+    "line_value": "",
+    "machine_label": "机台",
+    "split_by_station_group": true
+  },
+  "station_number_mapping": {
+    "enabled_machine_patterns": [
+      "RX-7",
+      "RX-8"
+    ]
+  }
+}

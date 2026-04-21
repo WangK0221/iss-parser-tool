@@ -14,6 +14,7 @@ from iss_parser_core.iss_parser import IssParser
 from services.data_mapper import DataMapper
 from services.excel_exporter import ExcelExporter
 from services.license_service import LicenseService
+from ui.about_dialog import AboutDialog
 from ui.export_settings_dialog import ExportSettingsDialog
 from utils.file_utils import ensure_directory, get_runtime_resource_path, scan_iss_files
 from utils.logger import get_logger
@@ -86,6 +87,9 @@ class MainWindow(ttk.Frame):
         ttk.Entry(frame, textvariable=self.machine_code_var, state="readonly").grid(row=0, column=1, padx=6, pady=6, sticky="ew")
         ttk.Button(frame, text="复制机器码", command=self.copy_machine_code, style="Compact.TButton").grid(row=0, column=2, padx=6, pady=6)
         ttk.Button(frame, text="导入授权文件", command=self.import_license, style="Compact.TButton").grid(row=0, column=3, padx=6, pady=6, sticky="w")
+        about_button_frame = ttk.Frame(frame)
+        about_button_frame.grid(row=0, column=4, padx=6, pady=6, sticky="e")
+        ttk.Button(about_button_frame, text="关于", command=self.open_about_dialog, style="Compact.TButton").pack(side="left")
 
         ttk.Label(frame, text="状态：").grid(row=1, column=0, padx=6, pady=4, sticky="e")
         self.status_value_label = tk.Label(frame, textvariable=self.license_status_var, anchor="w")
@@ -248,6 +252,9 @@ class MainWindow(ttk.Frame):
 
     def open_export_settings(self) -> None:
         ExportSettingsDialog(self.master, on_saved=lambda: self.append_log("表头设置已更新。"))
+
+    def open_about_dialog(self) -> None:
+        AboutDialog(self.master)
 
     def select_files(self) -> None:
         files = filedialog.askopenfilenames(title="选择 .iss 文件", filetypes=[("ISS 文件", "*.iss"), ("所有文件", "*.*")])

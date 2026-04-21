@@ -5,7 +5,7 @@ import sys
 
 
 APP_NAME = "ISS贴片程序解析工具"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 # 持久化目录与资源目录分离：
 # - 源码运行时：仍使用项目根目录。
@@ -52,6 +52,19 @@ DEFAULT_EXPORT_OPTIONS = {
     "export_placements": True,
     "export_summary": True,
     "export_raw": False,
+}
+
+ABOUT_DIALOG_DEFAULTS = {
+    "window_title": f"关于 {APP_NAME}",
+    "qr_image_path": "assets/about_qr.jpg",
+    "dialog_width": 720,
+    "dialog_height": 360,
+    "info_lines": [
+        {"label": "产品名称", "value": APP_NAME},
+        {"label": "版本", "value": f"v{APP_VERSION}"},
+        {"label": "联系方式(v)", "value": "mominshou"},
+    ],
+    "description": "本软件用于解析 SMT 贴片程序并导出客户格式报表。\n扫码添加微信，沟通需求或获取技术支持。",
 }
 
 # 客户格式主表配置。后续如客户调整列顺序或表头文字，只改这里。
@@ -113,7 +126,7 @@ CUSTOMER_REFDES_MODE = "joined"
 
 # 飞达显示业务规则。按样品验证结果配置，按顺序命中。
 # 字段支持：
-# package, reelTypeId, pitch, pitchCount, feederTypeId, bankKind, componentType
+# package, reelTypeId, pitch, pitchCount, pitchTotal, pitchSignature, feederTypeId, bankKind, componentType
 CUSTOMER_FEEDER_RULES = [
     {"name": "托盘料", "match": {"package": "TRAY"}, "display": "TR5S"},
     {"name": "8mm纸带-A", "match": {"package": "TAPE", "reelTypeId": "2", "pitch": "2", "pitchCount": "1", "feederTypeId": "1"}, "display": "M 8mm 纸带"},
@@ -128,10 +141,12 @@ CUSTOMER_FEEDER_RULES = [
     {"name": "24mm-A", "match": {"package": "TAPE", "reelTypeId": "14", "pitch": "6", "feederTypeId": "5"}, "display": "M 24mm"},
     {"name": "24mm-B", "match": {"package": "TAPE", "reelTypeId": "15", "pitch": "8", "feederTypeId": "5"}, "display": "M 24mm"},
     {"name": "32mm", "match": {"package": "TAPE", "reelTypeId": "19", "pitch": "12", "pitchCount": "1"}, "display": "M 32mm"},
+    {"name": "32mm-B", "match": {"package": "TAPE", "reelTypeId": "20", "pitch": "8", "pitchCount": "2"}, "display": "M 32mm"},
     {"name": "44mm", "match": {"package": "TAPE", "reelTypeId": "30", "pitch": "12", "feederTypeId": "8"}, "display": "M 44mm"},
     {"name": "44mm-20pitch", "match": {"package": "TAPE", "reelTypeId": "29", "pitch": "20", "pitchCount": "1"}, "display": "M 44mm"},
     {"name": "56mm", "match": {"package": "TAPE", "reelTypeId": "39", "pitch": "12", "pitchCount": "2"}, "display": "M 56mm"},
     {"name": "72mm", "match": {"package": "TAPE", "reelTypeId": "52", "pitch": "14", "pitchCount": "2"}, "display": "M 72mm"},
+    {"name": "8mm胶带-C", "match": {"package": "TAPE", "reelTypeId": "61", "pitch": "1", "pitchCount": "1"}, "display": "M 8mm 胶带"},
 ]
 
 # 飞达通用回退规则。
@@ -151,10 +166,12 @@ CUSTOMER_FEEDER_FALLBACK_RULES = [
     {"name": "24mm通用-A", "match": {"package": "TAPE", "reelTypeId": "14"}, "display": "M 24mm"},
     {"name": "24mm通用-B", "match": {"package": "TAPE", "reelTypeId": "15"}, "display": "M 24mm"},
     {"name": "32mm通用", "match": {"package": "TAPE", "reelTypeId": "19"}, "display": "M 32mm"},
+    {"name": "32mm通用-B", "match": {"package": "TAPE", "reelTypeId": "20"}, "display": "M 32mm"},
     {"name": "44mm通用-20pitch", "match": {"package": "TAPE", "reelTypeId": "29"}, "display": "M 44mm"},
     {"name": "44mm通用", "match": {"package": "TAPE", "reelTypeId": "30"}, "display": "M 44mm"},
     {"name": "56mm通用", "match": {"package": "TAPE", "reelTypeId": "39"}, "display": "M 56mm"},
     {"name": "72mm通用", "match": {"package": "TAPE", "reelTypeId": "52"}, "display": "M 72mm"},
+    {"name": "8mm胶带通用-C", "match": {"package": "TAPE", "reelTypeId": "61"}, "display": "M 8mm 胶带"},
 ]
 
 # 站位业务规则配置

@@ -1,5 +1,6 @@
 .venv/
 .venv-win7/
+.venv-py38/
 __pycache__/
 *.py[cod]
 *.pyd

@@ -11,7 +11,7 @@ DLL_DIR = PYTHON_BASE / "DLLs"
 TCL_DIR = PYTHON_BASE / "tcl"
 
 
-# 显式收集 tkinter 及其运行时依赖，避免 PyInstaller 自动探测失效时漏包。
+# Win7 包只应在 Python 3.8 x64 环境下构建，否则得到的 exe 仍然可能不兼容 Win7。
 hiddenimports = [
     "tkinter",
     "tkinter.ttk",
@@ -30,7 +30,9 @@ binaries = [
 ]
 
 datas = []
-datas.append((str(Path("assets") / "app.ico"), "assets"))
+for asset_file in Path("assets").glob("*"):
+    if asset_file.is_file():
+        datas.append((str(asset_file), "assets"))
 datas += collect_system_data_files(str(TCL_DIR / "tcl8.6"), destdir="_tcl_data")
 datas += collect_system_data_files(str(TCL_DIR / "tk8.6"), destdir="_tk_data")
 
@@ -56,7 +58,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="ISSParserTool_v5_win10_win11",
+    name="ISSParserTool",
     icon=str(Path("assets") / "app.ico"),
     debug=False,
     bootloader_ignore_signals=False,

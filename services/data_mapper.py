@@ -20,6 +20,27 @@ from utils.logger import get_logger
 logger = get_logger("data_mapper")
 
 
+def _safe_int(value: Any) -> int | None:
+    try:
+        text = str(value).strip()
+        if not text:
+            return None
+        return int(float(text))
+    except (TypeError, ValueError):
+        return None
+
+
+def build_feeder_pitch_signature(pitch: Any, pitch_count: Any) -> tuple[str, str]:
+    pitch_value = _safe_int(pitch)
+    count_value = _safe_int(pitch_count)
+    if pitch_value is None or count_value is None:
+        return "", ""
+    if pitch_value <= 0 or count_value <= 0:
+        return "", ""
+    total = pitch_value * count_value
+    return str(total), f"{total}mm({pitch_value}*{count_value})"
+
+
 def build_station_display(row: dict[str, Any]) -> str:
     """站位生成规则。tray 按区位输出，multiTray 固定回退到 MTS。"""
     package_value = str(row.get("package", "")).strip()
@@ -81,11 +102,16 @@ def build_package_display(component: Any, feeder: Any) -> str:
 def build_feeder_display(component: Any, feeder: Any) -> str:
     """飞达显示规则。按配置规则顺序匹配。"""
     extra = getattr(component, "extra", {}) or {}
+    pitch_value = str(extra.get("feederPitch.pitch", "")).strip()
+    pitch_count_value = str(extra.get("feederPitch.count", "")).strip()
+    pitch_total, pitch_signature = build_feeder_pitch_signature(pitch_value, pitch_count_value)
     facts = {
         "package": str(extra.get("package", "")).strip().upper(),
         "reelTypeId": str(extra.get("feeder.reelTypeId", "")).strip(),
-        "pitch": str(extra.get("feederPitch.pitch", "")).strip(),
-        "pitchCount": str(extra.get("feederPitch.count", "")).strip(),
+        "pitch": pitch_value,
+        "pitchCount": pitch_count_value,
+        "pitchTotal": pitch_total,
+        "pitchSignature": pitch_signature,
         "feederTypeId": str(getattr(feeder, "feeder_type", "")).strip(),
         "bankKind": str(getattr(feeder, "bank_kind", "")).strip(),
         "componentType": str(extra.get("componentType", "")).strip().upper(),
@@ -332,6 +358,10 @@ class DataMapper:
             placements = placements_by_component.get(component_name, [])
             feeders = feeders_by_component.get(component_name, [])
             component_extra = getattr(component, "extra", {}) or {}
+            pitch_total, pitch_signature = build_feeder_pitch_signature(
+                component_extra.get("feederPitch.pitch", ""),
+                component_extra.get("feederPitch.count", ""),
+            )
 
             if feeders:
                 for feeder in feeders:
@@ -349,6 +379,8 @@ class DataMapper:
                             "reelTypeId": component_extra.get("feeder.reelTypeId", ""),
                             "feederPitch.pitch": component_extra.get("feederPitch.pitch", ""),
                             "feederPitch.count": component_extra.get("feederPitch.count", ""),
+                            "feederPitch.total": pitch_total,
+                            "feederPitch.signature": pitch_signature,
                             "position.stationId": feeder.station_id,
                             "position.bankPos": feeder.bank_pos,
                             "position.bankKind": feeder.bank_kind,
@@ -391,6 +423,8 @@ class DataMapper:
                         "reelTypeId": component_extra.get("feeder.reelTypeId", ""),
                         "feederPitch.pitch": component_extra.get("feederPitch.pitch", ""),
                         "feederPitch.count": component_extra.get("feederPitch.count", ""),
+                        "feederPitch.total": pitch_total,
+                        "feederPitch.signature": pitch_signature,
                         "position.stationId": "",
                         "position.bankPos": "",
                         "position.bankKind": "",

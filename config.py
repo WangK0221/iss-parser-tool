@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 
-APP_NAME = "ISS贴片程序解析工具"
+APP_NAME = "juki站位表生成工具"
 APP_VERSION = "1.1.0"
 
 # 持久化目录与资源目录分离：
@@ -64,7 +64,7 @@ ABOUT_DIALOG_DEFAULTS = {
         {"label": "版本", "value": f"v{APP_VERSION}"},
         {"label": "联系方式(v)", "value": "mominshou"},
     ],
-    "description": "本软件用于解析 SMT 贴片程序并导出客户格式报表。\n扫码添加微信，沟通需求或获取技术支持。",
+    "description": "本软件用于解析.iss文件并导出站位表。\n扫码添加微信，沟通需求或获取技术支持。",
 }
 
 # 客户格式主表配置。后续如客户调整列顺序或表头文字，只改这里。
@@ -129,20 +129,22 @@ CUSTOMER_REFDES_MODE = "joined"
 # package, reelTypeId, pitch, pitchCount, pitchTotal, pitchSignature, feederTypeId, bankKind, componentType
 CUSTOMER_FEEDER_RULES = [
     {"name": "托盘料", "match": {"package": "TRAY"}, "display": "TR5S"},
-    {"name": "8mm纸带-A", "match": {"package": "TAPE", "reelTypeId": "2", "pitch": "2", "pitchCount": "1", "feederTypeId": "1"}, "display": "M 8mm 纸带"},
-    {"name": "8mm纸带-B", "match": {"package": "TAPE", "reelTypeId": "3", "pitch": "4", "pitchCount": "1", "feederTypeId": "1"}, "display": "M 8mm 纸带"},
-    {"name": "8mm胶带-A", "match": {"package": "TAPE", "reelTypeId": "4", "pitch": "2", "pitchCount": "1", "feederTypeId": "2"}, "display": "M 8mm 胶带"},
-    {"name": "8mm胶带-B", "match": {"package": "TAPE", "reelTypeId": "5", "pitch": "4", "pitchCount": "1", "feederTypeId": "2"}, "display": "M 8mm 胶带"},
-    {"name": "12mm-A", "match": {"package": "TAPE", "reelTypeId": "6", "pitch": "4", "feederTypeId": "3"}, "display": "M 12mm"},
-    {"name": "12mm-B", "match": {"package": "TAPE", "reelTypeId": "7", "pitch": "4", "feederTypeId": "3"}, "display": "M 12mm"},
-    {"name": "12mm-C", "match": {"package": "TAPE", "reelTypeId": "8", "pitch": "6", "feederTypeId": "3"}, "display": "M 12mm"},
-    {"name": "16mm-A", "match": {"package": "TAPE", "reelTypeId": "10", "pitch": "4", "feederTypeId": "4"}, "display": "M 16mm"},
-    {"name": "16mm-B", "match": {"package": "TAPE", "reelTypeId": "11", "pitch": "6", "feederTypeId": "4"}, "display": "M 16mm"},
-    {"name": "24mm-A", "match": {"package": "TAPE", "reelTypeId": "14", "pitch": "6", "feederTypeId": "5"}, "display": "M 24mm"},
-    {"name": "24mm-B", "match": {"package": "TAPE", "reelTypeId": "15", "pitch": "8", "feederTypeId": "5"}, "display": "M 24mm"},
+    {"name": "8mm纸带-A", "match": {"package": "TAPE", "reelTypeId": "2", "pitch": "2", "pitchCount": "1"}, "display": "M 8mm 纸带"},
+    {"name": "8mm纸带-B", "match": {"package": "TAPE", "reelTypeId": "3", "pitch": "4", "pitchCount": "1"}, "display": "M 8mm 纸带"},
+    {"name": "8mm胶带-A", "match": {"package": "TAPE", "reelTypeId": "4", "pitch": "2", "pitchCount": "1"}, "display": "M 8mm 胶带"},
+    {"name": "8mm胶带-B", "match": {"package": "TAPE", "reelTypeId": "5", "pitch": "4", "pitchCount": "1"}, "display": "M 8mm 胶带"},
+    {"name": "12mm-A", "match": {"package": "TAPE", "reelTypeId": "6", "pitch": "4"}, "display": "M 12mm"},
+    {"name": "12mm-B", "match": {"package": "TAPE", "reelTypeId": "7", "pitch": "4"}, "display": "M 12mm"},
+    {"name": "12mm-B-8pitch", "match": {"package": "TAPE", "reelTypeId": "7", "pitch": "8", "pitchCount": "1"}, "display": "M 12mm"},
+    {"name": "12mm-C", "match": {"package": "TAPE", "reelTypeId": "8", "pitch": "6"}, "display": "M 12mm"},
+    {"name": "16mm-A", "match": {"package": "TAPE", "reelTypeId": "10", "pitch": "4"}, "display": "M 16mm"},
+    {"name": "16mm-B", "match": {"package": "TAPE", "reelTypeId": "11", "pitch": "6"}, "display": "M 16mm"},
+    {"name": "24mm-A", "match": {"package": "TAPE", "reelTypeId": "14", "pitch": "6"}, "display": "M 24mm"},
+    {"name": "24mm-B", "match": {"package": "TAPE", "reelTypeId": "15", "pitch": "8"}, "display": "M 24mm"},
+    {"name": "32mm-A", "match": {"package": "TAPE", "reelTypeId": "19", "pitch": "6", "pitchCount": "2"}, "display": "M 32mm"},
     {"name": "32mm", "match": {"package": "TAPE", "reelTypeId": "19", "pitch": "12", "pitchCount": "1"}, "display": "M 32mm"},
     {"name": "32mm-B", "match": {"package": "TAPE", "reelTypeId": "20", "pitch": "8", "pitchCount": "2"}, "display": "M 32mm"},
-    {"name": "44mm", "match": {"package": "TAPE", "reelTypeId": "30", "pitch": "12", "feederTypeId": "8"}, "display": "M 44mm"},
+    {"name": "44mm", "match": {"package": "TAPE", "reelTypeId": "30", "pitch": "12"}, "display": "M 44mm"},
     {"name": "44mm-20pitch", "match": {"package": "TAPE", "reelTypeId": "29", "pitch": "20", "pitchCount": "1"}, "display": "M 44mm"},
     {"name": "56mm", "match": {"package": "TAPE", "reelTypeId": "39", "pitch": "12", "pitchCount": "2"}, "display": "M 56mm"},
     {"name": "72mm", "match": {"package": "TAPE", "reelTypeId": "52", "pitch": "14", "pitchCount": "2"}, "display": "M 72mm"},
@@ -173,6 +175,90 @@ CUSTOMER_FEEDER_FALLBACK_RULES = [
     {"name": "72mm通用", "match": {"package": "TAPE", "reelTypeId": "52"}, "display": "M 72mm"},
     {"name": "8mm胶带通用-C", "match": {"package": "TAPE", "reelTypeId": "61"}, "display": "M 8mm 胶带"},
 ]
+
+# 供料装置映射。
+# 目标是从 ISS 原始字段直接推导“供料装置”，不依赖软件界面中的完整拼接串。
+# 主键以 package + reelTypeId 为主；pitch/count 应单独派生为“输送间隔”。
+# 注意：
+# - 当前规则按已知 reelTypeId 显式枚举，不按数值区间推导。
+# - 现有样本已经证明 61 仍可能映射回 8mm 家族，因此不能使用“49+ 全是 72mm”之类的区间假设。
+CUSTOMER_FEEDER_DEVICE_VALUE_MAP = {
+    # 8mm 家族
+    "2": "8mm 纸带",
+    "3": "8mm 纸带",
+    "4": "8mm 胶带",
+    "5": "8mm 胶带",
+    # 12mm 家族
+    "6": "12mm 胶带",
+    "7": "12mm 胶带",
+    "8": "12mm 胶带",
+    # 16mm 家族
+    "9": "16mm 胶带",
+    "10": "16mm 胶带",
+    "11": "16mm 胶带",
+    "12": "16mm 胶带",
+    # 24mm 家族
+    "13": "24mm 胶带",
+    "14": "24mm 胶带",
+    "15": "24mm 胶带",
+    "16": "24mm 胶带",
+    "17": "24mm 胶带",
+    "18": "24mm 胶带",
+    # 32mm 家族
+    "19": "32mm 胶带",
+    "20": "32mm 胶带",
+    "21": "32mm 胶带",
+    "22": "32mm 胶带",
+    "23": "32mm 胶带",
+    "24": "32mm 胶带",
+    "25": "32mm 胶带",
+    "26": "32mm 胶带",
+    # 44mm 家族
+    "27": "44mm 胶带",
+    "28": "44mm 胶带",
+    "29": "44mm 胶带",
+    "30": "44mm 胶带",
+    "31": "44mm 胶带",
+    "32": "44mm 胶带",
+    "34": "44mm 胶带",
+    "35": "44mm 胶带",
+    # 56mm 家族
+    "36": "56mm 胶带",
+    "37": "56mm 胶带",
+    "38": "56mm 胶带",
+    "39": "56mm 胶带",
+    "40": "56mm 胶带",
+    "41": "56mm 胶带",
+    "42": "56mm 胶带",
+    "43": "56mm 胶带",
+    "44": "56mm 胶带",
+    "45": "56mm 胶带",
+    "46": "56mm 胶带",
+    "47": "56mm 胶带",
+    # 72mm 家族
+    "48": "72mm 胶带",
+    "49": "72mm 胶带",
+    "50": "72mm 胶带",
+    "51": "72mm 胶带",
+    "52": "72mm 胶带",
+    "53": "72mm 胶带",
+    "54": "72mm 胶带",
+    "55": "72mm 胶带",
+    "56": "72mm 胶带",
+    "57": "72mm 胶带",
+    "58": "72mm 胶带",
+    "59": "72mm 胶带",
+    # 72/88mm 边界样本中的特殊枚举。74 来自 56-72mm 样本分组，81-83 来自 72-88mm 样本分组。
+    "74": "72mm 胶带",
+    # 88mm 家族（目前仅样本覆盖到这 3 个值）
+    "81": "88mm 胶带",
+    "82": "88mm 胶带",
+    "83": "88mm 胶带",
+    # 8mm 特例，不能按区间归到 72mm
+    "61": "8mm 胶带",
+}
+
+CUSTOMER_TRAY_FEEDER_FALLBACK_VALUE = "TR5S"
 
 # 站位业务规则配置
 CUSTOMER_SUPPLY_VALUE_MAP = {

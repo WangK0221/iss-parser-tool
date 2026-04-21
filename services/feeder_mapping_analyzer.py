@@ -9,6 +9,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font
 
 from iss_parser_core.iss_parser import IssParseResult
+from services.data_mapper import build_feeder_device_display, build_feeder_display, build_feeder_interval_display
 
 
 @dataclass
@@ -55,6 +56,10 @@ class FeederMappingAnalyzer:
                             "reelTypeId": component_extra.get("feeder.reelTypeId", ""),
                             "pitch": component_extra.get("feederPitch.pitch", ""),
                             "pitchCount": component_extra.get("feederPitch.count", ""),
+                            "供料装置显示": build_feeder_device_display(component, feeder),
+                            "输送间隔显示": build_feeder_interval_display(component),
+                            "客户飞达显示": build_feeder_display(component, feeder),
+                            "供料单元类型": str(getattr(feeder, "extra", {}).get("supplyUnit.type", "")),
                             "feeder.typeId": feeder.feeder_type,
                             "bankKind": feeder.bank_kind,
                             "stationId": feeder.station_id,
@@ -78,6 +83,10 @@ class FeederMappingAnalyzer:
                         "reelTypeId": component_extra.get("feeder.reelTypeId", ""),
                         "pitch": component_extra.get("feederPitch.pitch", ""),
                         "pitchCount": component_extra.get("feederPitch.count", ""),
+                        "供料装置显示": "",
+                        "输送间隔显示": build_feeder_interval_display(component),
+                        "客户飞达显示": "",
+                        "供料单元类型": "",
                         "feeder.typeId": "",
                         "bankKind": "",
                         "stationId": "",
@@ -120,6 +129,10 @@ class FeederMappingAnalyzer:
                     "reelTypeId": combo[1],
                     "pitch": combo[2],
                     "pitchCount": combo[3],
+                    "供料装置显示集合": set(),
+                    "输送间隔显示集合": set(),
+                    "客户飞达显示集合": set(),
+                    "供料单元类型集合": set(),
                     "feeder.typeId": combo[4],
                     "bankKind": combo[5],
                     "componentType": combo[6],
@@ -131,6 +144,10 @@ class FeederMappingAnalyzer:
                 },
             )
             combo_bucket["componentNames"].add(str(row.get("componentName", "")).strip())
+            combo_bucket["供料装置显示集合"].add(str(row.get("供料装置显示", "")).strip())
+            combo_bucket["输送间隔显示集合"].add(str(row.get("输送间隔显示", "")).strip())
+            combo_bucket["客户飞达显示集合"].add(str(row.get("客户飞达显示", "")).strip())
+            combo_bucket["供料单元类型集合"].add(str(row.get("供料单元类型", "")).strip())
             combo_bucket["stationIds"].add(str(row.get("stationId", "")).strip())
             combo_bucket["bankPosSet"].add(str(row.get("bankPos", "")).strip())
             combo_bucket["holeNoSet"].add(str(row.get("holeNo", "")).strip())
@@ -151,6 +168,10 @@ class FeederMappingAnalyzer:
                         "reelTypeId": combo_bucket["reelTypeId"],
                         "pitch": combo_bucket["pitch"],
                         "pitchCount": combo_bucket["pitchCount"],
+                        "供料装置显示": ",".join(sorted(item for item in combo_bucket["供料装置显示集合"] if item)),
+                        "输送间隔显示": ",".join(sorted(item for item in combo_bucket["输送间隔显示集合"] if item)),
+                        "客户飞达显示": ",".join(sorted(item for item in combo_bucket["客户飞达显示集合"] if item)),
+                        "供料单元类型": ",".join(sorted(item for item in combo_bucket["供料单元类型集合"] if item)),
                         "feeder.typeId": combo_bucket["feeder.typeId"],
                         "bankKind": combo_bucket["bankKind"],
                         "componentType": combo_bucket["componentType"],

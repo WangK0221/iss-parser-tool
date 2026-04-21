@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 from pathlib import Path
+import os
 import sys
 
 from PyInstaller.utils.hooks import collect_system_data_files
@@ -9,6 +10,36 @@ from PyInstaller.utils.hooks import collect_system_data_files
 PYTHON_BASE = Path(sys.base_prefix)
 DLL_DIR = PYTHON_BASE / "DLLs"
 TCL_DIR = PYTHON_BASE / "tcl"
+SYSTEM32_DIR = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32"
+
+
+def _find_ucrt_redist_dir():
+    candidates = [
+        Path(r"C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x64"),
+        Path(r"C:\Program Files (x86)\Windows Kits\10\Redist\10.0.22621.0\ucrt\DLLs\x64"),
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _collect_runtime_binaries():
+    runtime_binaries = []
+    for candidate in [
+        PYTHON_BASE / "vcruntime140.dll",
+        PYTHON_BASE / "vcruntime140_1.dll",
+        SYSTEM32_DIR / "msvcp140.dll",
+        SYSTEM32_DIR / "concrt140.dll",
+    ]:
+        if candidate.exists():
+            runtime_binaries.append((str(candidate), "."))
+
+    ucrt_dir = _find_ucrt_redist_dir()
+    if ucrt_dir is not None:
+        for dll_file in sorted(ucrt_dir.glob("*.dll")):
+            runtime_binaries.append((str(dll_file), "."))
+    return runtime_binaries
 
 
 # Win7 包只应在 Python 3.8 x64 环境下构建，否则得到的 exe 仍然可能不兼容 Win7。
@@ -28,6 +59,7 @@ binaries = [
     (str(DLL_DIR / "tcl86t.dll"), "."),
     (str(DLL_DIR / "tk86t.dll"), "."),
 ]
+binaries += _collect_runtime_binaries()
 
 datas = []
 for asset_file in Path("assets").glob("*"):
@@ -48,7 +80,6 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=0,
 )
 pyz = PYZ(a.pure)
 
@@ -58,13 +89,13 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="ISSParserTool",
+    name="juki站位表生成工具",
     icon=str(Path("assets") / "app.ico"),
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
-    upx_exclude=["_tkinter.pyd", "tcl86t.dll", "tk86t.dll"],
+    upx=False,
+    upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,

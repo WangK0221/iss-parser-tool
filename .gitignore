@@ -9,6 +9,7 @@ __pycache__/
 build/
 dist/
 *.zip
+tools/pyinstaller-*.whl
 
 logs/
 output/

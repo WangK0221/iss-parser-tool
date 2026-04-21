@@ -1,11 +1,11 @@
-# ISS 贴片程序解析工具
+# juki站位表生成工具
 
-本项目是本地 Windows 桌面工具，用于解析 SMT `.iss` 程序并导出客户格式 Excel 报表。
+本项目是本地 Windows 桌面工具，用于解析 JUKI `.iss` 程序并生成站位表、导出客户格式 Excel 报表。
 
 ## 当前目录结构
 
 ```text
-ISSParserTool
+项目根目录
 ├─ assets
 │  ├─ about_qr.jpg
 │  └─ app.ico
@@ -40,7 +40,7 @@ ISSParserTool
 │  ├─ logger.py
 │  └─ __init__.py
 ├─ config.py
-├─ ISSParserTool.spec
+├─ app.spec
 ├─ LicenseGenerator.spec
 ├─ license_generator.py
 ├─ main.py
@@ -77,7 +77,7 @@ ISSParserTool
 - `pyinstaller_hooks/`
   - PyInstaller 打包补丁。
   - 当前用于修正 `tkinter` 相关资源探测，不能删除。
-- `ISSParserTool.spec`
+- `app.spec`
   - 主程序唯一打包规格。
 - `LicenseGenerator.spec`
   - 授权生成器打包规格。
@@ -127,7 +127,7 @@ python main.py
 
 授权文件查找路径：
 
-- `ISSParserTool.exe` 同目录下的 `license.json`
+- `juki站位表生成工具.exe` 同目录下的 `license.json`
 - `license\license.json`
 
 命令行生成授权：
@@ -174,7 +174,7 @@ python license_generator.py
 
 ## 打包
 
-统一使用 `ISSParserTool.spec` 和 `tools\build.ps1`。
+统一使用 `app.spec` 和 `tools\build.ps1`。
 
 执行：
 
@@ -190,7 +190,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build.ps1 -PythonExe "D:\path\t
 
 产物：
 
-- `dist\ISSParserTool.exe`
+- `dist\juki站位表生成工具.exe`
 
 说明：
 

@@ -397,7 +397,7 @@ class MainWindow(ttk.Frame):
                     mapped_results.append(sheet_data)
 
                     if options["split_by_file"]:
-                        export_path = self.exporter.export(output_dir, f"{file_path.stem}_解析结果", sheet_data)
+                        export_path = self.exporter.export(output_dir, f"{file_path.stem}_站位表", sheet_data)
                         success_exports.append(export_path)
                         self._ui_call(lambda p=export_path: self.append_log(f"已导出：{p.name}"))
                 except PermissionError:
@@ -411,7 +411,7 @@ class MainWindow(ttk.Frame):
             if options["merge_export"] and mapped_results:
                 try:
                     merged = self.mapper.merge_sheet_sets(mapped_results)
-                    export_path = self.exporter.export(output_dir, "ISS批量解析结果", merged)
+                    export_path = self.exporter.export(output_dir, "juki批量站位表", merged)
                     success_exports.append(export_path)
                     self._ui_call(lambda p=export_path: self.append_log(f"已导出合并文件：{p.name}"))
                 except PermissionError:

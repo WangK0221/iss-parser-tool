@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 
+from config import APP_NAME
 from services.license_service import LicenseService
 
 
@@ -23,7 +24,7 @@ class LicenseGeneratorWindow(ttk.Frame):
         self._build_ui()
 
     def _setup_window(self) -> None:
-        self.master.title("授权生成器")
+        self.master.title(f"{APP_NAME}授权生成器")
         self.master.minsize(760, 260)
         self.pack(fill="both", expand=True, padx=12, pady=12)
         self.columnconfigure(1, weight=1)
@@ -69,10 +70,10 @@ class LicenseGeneratorWindow(ttk.Frame):
         output_path = Path(self.output_path_var.get().strip()).resolve()
 
         if not customer:
-            messagebox.showwarning("授权生成器", "客户名称不能为空。")
+            messagebox.showwarning(f"{APP_NAME}授权生成器", "客户名称不能为空。")
             return
         if not machine_code:
-            messagebox.showwarning("授权生成器", "机器码不能为空。")
+            messagebox.showwarning(f"{APP_NAME}授权生成器", "机器码不能为空。")
             return
 
         data = self.service.generate_license_data(customer=customer, machine_code=machine_code, expire_at=expire_at)
@@ -81,7 +82,7 @@ class LicenseGeneratorWindow(ttk.Frame):
 
         self.preview_text.delete("1.0", tk.END)
         self.preview_text.insert(tk.END, json.dumps(data, ensure_ascii=False, indent=2))
-        messagebox.showinfo("授权生成器", f"授权文件已生成：\n{output_path}")
+        messagebox.showinfo(f"{APP_NAME}授权生成器", f"授权文件已生成：\n{output_path}")
 
     def copy_output_path(self) -> None:
         path = self.output_path_var.get().strip()

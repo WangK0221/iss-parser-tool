@@ -298,6 +298,13 @@ class IssParser:
             extra["machine.no"] = machine_info["no"]
         if machine_info.get("name"):
             extra["machine.name"] = machine_info["name"]
+        position_node = feeder.find("./position")
+        station_id = self._extract_value(position_node, ["stationId", "station", "stationNo"]) if position_node is not None else ""
+        supply_info = machine_info.get("supply_units_by_station", {}).get(station_id, {}) if station_id else {}
+        if supply_info.get("type"):
+            extra["supplyUnit.type"] = supply_info["type"]
+        if supply_info.get("kind"):
+            extra["supplyUnit.kind"] = supply_info["kind"]
 
         return FeederRecord(
             component_name=component_name,
@@ -305,7 +312,7 @@ class IssParser:
             machine_name=machine_info.get("name", ""),
             pick_index=pick_index,
             hole_no=self._extract_value(position_node, ["holeNo", "slotNo", "hole"]) if position_node is not None else "",
-            station_id=self._extract_value(position_node, ["stationId", "station", "stationNo"]) if position_node is not None else "",
+            station_id=station_id,
             bank_pos=self._extract_value(position_node, ["bankPos", "bankPosition"]) if position_node is not None else "",
             bank_kind=self._extract_value(position_node, ["bankKind", "bankType"]) if position_node is not None else "",
             feeder_type=self._extract_value(feeder_type_node, ["typeId", "reelTypeId", "type"]) if feeder_type_node is not None else "",
@@ -337,13 +344,19 @@ class IssParser:
             extra["machine.name"] = machine_info["name"]
 
         tray_no = self._extract_value(position_node, ["no", "trayNo", "tray", "holeNo", "slotNo", "hole"])
+        station_id = self._extract_value(position_node, ["stationId", "station", "stationNo"]) if position_node is not None else ""
+        supply_info = machine_info.get("supply_units_by_station", {}).get(station_id, {}) if station_id else {}
+        if supply_info.get("type"):
+            extra["supplyUnit.type"] = supply_info["type"]
+        if supply_info.get("kind"):
+            extra["supplyUnit.kind"] = supply_info["kind"]
         return FeederRecord(
             component_name=component_name,
             machine_no=machine_info.get("no", ""),
             machine_name=machine_info.get("name", ""),
             pick_index=pick_index,
             hole_no=tray_no,
-            station_id=self._extract_value(position_node, ["stationId", "station", "stationNo"]) if position_node is not None else "",
+            station_id=station_id,
             bank_pos=self._extract_value(position_node, ["bankPos", "bankPosition"]) if position_node is not None else "",
             bank_kind=self._extract_value(position_node, ["bankKind", "bankType"]) if position_node is not None else "",
             feeder_type=self._extract_value(feeder_type_node, ["typeId", "reelTypeId", "type"]) if feeder_type_node is not None else "",
@@ -364,6 +377,7 @@ class IssParser:
                 continue
             station_ids: list[str] = []
             bank_kinds: list[str] = []
+            supply_units_by_station: dict[str, dict[str, str]] = {}
             for station_unit in machine.findall("./stationUnit"):
                 station_id = (station_unit.attrib.get("id") or "").strip()
                 if station_id and station_id not in station_ids:
@@ -372,6 +386,16 @@ class IssParser:
                     bank_kind = (bank_unit.attrib.get("kind") or "").strip()
                     if bank_kind and bank_kind not in bank_kinds:
                         bank_kinds.append(bank_kind)
+                for supply_unit in [*station_unit.findall("./sypplyUnit"), *station_unit.findall("./supplyUnit")]:
+                    if not station_id:
+                        continue
+                    supply_type = (supply_unit.findtext("./type") or "").strip()
+                    supply_kind = (supply_unit.findtext("./kind") or "").strip()
+                    if supply_type or supply_kind:
+                        supply_units_by_station[station_id] = {
+                            "type": supply_type,
+                            "kind": supply_kind,
+                        }
 
             machines.append(
                 {
@@ -379,6 +403,7 @@ class IssParser:
                     "name": machine_name,
                     "station_ids": station_ids,
                     "bank_kinds": bank_kinds,
+                    "supply_units_by_station": supply_units_by_station,
                     "type_code": (machine.findtext("./typeCode") or "").strip(),
                 }
             )

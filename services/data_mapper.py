@@ -5,11 +5,11 @@ from typing import Any
 
 from config import (
     CUSTOMER_SIDE_PREFIX_ORDER,
-    CUSTOMER_FEEDER_FALLBACK_RULES,
-    CUSTOMER_FEEDER_RULES,
+    CUSTOMER_FEEDER_DEVICE_VALUE_MAP,
     CUSTOMER_REFDES_MODE,
     CUSTOMER_STATION_PREFIX_MAP,
     CUSTOMER_SUPPLY_VALUE_MAP,
+    CUSTOMER_TRAY_FEEDER_FALLBACK_VALUE,
     CUSTOMER_TRAY_PACKAGE_VALUES,
     CUSTOMER_TRAY_STATION_PREFIX,
 )
@@ -39,6 +39,61 @@ def build_feeder_pitch_signature(pitch: Any, pitch_count: Any) -> tuple[str, str
         return "", ""
     total = pitch_value * count_value
     return str(total), f"{total}mm({pitch_value}*{count_value})"
+
+
+def _build_feeder_source_facts(component: Any, feeder: Any) -> dict[str, str]:
+    extra = getattr(component, "extra", {}) or {}
+    pitch_value = str(extra.get("feederPitch.pitch", "")).strip()
+    pitch_count_value = str(extra.get("feederPitch.count", "")).strip()
+    pitch_total, pitch_signature = build_feeder_pitch_signature(pitch_value, pitch_count_value)
+    feeder_extra = getattr(feeder, "extra", {}) or {}
+    return {
+        "package": str(extra.get("package", "")).strip().upper(),
+        "reelTypeId": str(extra.get("feeder.reelTypeId", "")).strip(),
+        "pitch": pitch_value,
+        "pitchCount": pitch_count_value,
+        "pitchTotal": pitch_total,
+        "pitchSignature": pitch_signature,
+        "feederTypeId": str(getattr(feeder, "feeder_type", "")).strip(),
+        "bankKind": str(getattr(feeder, "bank_kind", "")).strip(),
+        "componentType": str(extra.get("componentType", "")).strip().upper(),
+        "supplyUnitType": str(feeder_extra.get("supplyUnit.type", "")).strip(),
+        "sourceKind": str(feeder_extra.get("source.kind", "")).strip().lower(),
+    }
+
+
+def build_feeder_interval_display(component: Any) -> str:
+    extra = getattr(component, "extra", {}) or {}
+    _, pitch_signature = build_feeder_pitch_signature(
+        extra.get("feederPitch.pitch", ""),
+        extra.get("feederPitch.count", ""),
+    )
+    return pitch_signature
+
+
+def build_feeder_device_display(component: Any, feeder: Any) -> str:
+    """供料装置显示规则。按 ISS 原始字段拆解，不依赖完整拼接串。"""
+    if component is None or feeder is None:
+        return ""
+
+    facts = _build_feeder_source_facts(component, feeder)
+    package_value = facts["package"]
+    if package_value == "TRAY":
+        direct_type = facts["supplyUnitType"]
+        if direct_type:
+            return direct_type
+        return CUSTOMER_TRAY_FEEDER_FALLBACK_VALUE
+
+    if package_value != "TAPE":
+        return ""
+
+    display = CUSTOMER_FEEDER_DEVICE_VALUE_MAP.get(facts["reelTypeId"], "")
+    if display:
+        return display
+
+    if any(facts.values()):
+        logger.warning("供料装置映射未命中: component=%s facts=%s", getattr(component, "component_name", ""), facts)
+    return ""
 
 
 def build_station_display(row: dict[str, Any]) -> str:
@@ -100,44 +155,17 @@ def build_package_display(component: Any, feeder: Any) -> str:
 
 
 def build_feeder_display(component: Any, feeder: Any) -> str:
-    """飞达显示规则。按配置规则顺序匹配。"""
-    extra = getattr(component, "extra", {}) or {}
-    pitch_value = str(extra.get("feederPitch.pitch", "")).strip()
-    pitch_count_value = str(extra.get("feederPitch.count", "")).strip()
-    pitch_total, pitch_signature = build_feeder_pitch_signature(pitch_value, pitch_count_value)
-    facts = {
-        "package": str(extra.get("package", "")).strip().upper(),
-        "reelTypeId": str(extra.get("feeder.reelTypeId", "")).strip(),
-        "pitch": pitch_value,
-        "pitchCount": pitch_count_value,
-        "pitchTotal": pitch_total,
-        "pitchSignature": pitch_signature,
-        "feederTypeId": str(getattr(feeder, "feeder_type", "")).strip(),
-        "bankKind": str(getattr(feeder, "bank_kind", "")).strip(),
-        "componentType": str(extra.get("componentType", "")).strip().upper(),
-    }
+    """客户飞达列显示。输出“供料装置 + 输送间隔”，tray 保持原始类型。"""
+    device_display = str(build_feeder_device_display(component, feeder) or "").strip()
+    if not device_display:
+        return ""
+    if device_display.upper().startswith("TR"):
+        return device_display
 
-    for rule in CUSTOMER_FEEDER_RULES:
-        match = rule.get("match", {})
-        if all(str(facts.get(key, "")).upper() == str(value).upper() for key, value in match.items()):
-            return str(rule.get("display", "")).strip()
-
-    for rule in CUSTOMER_FEEDER_FALLBACK_RULES:
-        match = rule.get("match", {})
-        if all(str(facts.get(key, "")).upper() == str(value).upper() for key, value in match.items()):
-            display = str(rule.get("display", "")).strip()
-            logger.info(
-                "飞达映射使用通用回退规则: component=%s rule=%s facts=%s display=%s",
-                getattr(component, "component_name", ""),
-                rule.get("name", ""),
-                facts,
-                display,
-            )
-            return display
-
-    if any(facts.values()):
-        logger.warning("飞达映射未命中: component=%s facts=%s", getattr(component, "component_name", ""), facts)
-    return ""
+    interval_display = str(build_feeder_interval_display(component) or "").strip()
+    if interval_display:
+        return f"{device_display} {interval_display}"
+    return device_display
 
 
 def build_supply_display(feeder: Any) -> str:
@@ -206,7 +234,7 @@ class DataMapper:
                         sheet_name,
                         {
                             "sheet_type": "customer_format",
-                            "title": "ISS批量解析结果",
+                            "title": "juki批量站位表",
                             "machine_label": "",
                             "fields": list(sheet_data.get("fields", [])),
                             "headers": dict(sheet_data.get("headers", {})),
@@ -381,6 +409,9 @@ class DataMapper:
                             "feederPitch.count": component_extra.get("feederPitch.count", ""),
                             "feederPitch.total": pitch_total,
                             "feederPitch.signature": pitch_signature,
+                            "供料装置显示": build_feeder_device_display(component, feeder),
+                            "输送间隔显示": build_feeder_interval_display(component),
+                            "供料单元类型": str(getattr(feeder, "extra", {}).get("supplyUnit.type", "")),
                             "position.stationId": feeder.station_id,
                             "position.bankPos": feeder.bank_pos,
                             "position.bankKind": feeder.bank_kind,
@@ -425,6 +456,9 @@ class DataMapper:
                         "feederPitch.count": component_extra.get("feederPitch.count", ""),
                         "feederPitch.total": pitch_total,
                         "feederPitch.signature": pitch_signature,
+                        "供料装置显示": "",
+                        "输送间隔显示": build_feeder_interval_display(component),
+                        "供料单元类型": "",
                         "position.stationId": "",
                         "position.bankPos": "",
                         "position.bankKind": "",

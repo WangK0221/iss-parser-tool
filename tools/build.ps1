@@ -3,11 +3,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$TargetPyInstallerVersion = "5.13.2"
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$SpecPath = Join-Path $RepoRoot "ISSParserTool.spec"
+$SpecPath = Join-Path $RepoRoot "app.spec"
 $DistPath = Join-Path $RepoRoot "dist"
 $WorkPath = Join-Path $RepoRoot "build\\pyinstaller"
+$LocalPyInstallerWheel = Join-Path $RepoRoot "tools\\pyinstaller-5.13.2-py3-none-win_amd64.whl"
 
 if (-not $PythonExe) {
     $PyLauncher = Get-Command py -ErrorAction SilentlyContinue
@@ -41,6 +43,20 @@ if ($VersionText -notlike "Python 3.8.*") {
     throw "Package must be built with Python 3.8.x for Win7 compatibility. Current: $VersionText"
 }
 
+$CurrentPyInstallerVersion = & $PythonExe -c "import importlib.metadata as md; print(md.version('pyinstaller'))" 2>$null
+if ($LASTEXITCODE -ne 0 -or $CurrentPyInstallerVersion.Trim() -ne $TargetPyInstallerVersion) {
+    Write-Host "Installing PyInstaller $TargetPyInstallerVersion for Win7-compatible build..."
+    if (Test-Path $LocalPyInstallerWheel) {
+        & $PythonExe -m pip install --no-index --no-deps --force-reinstall $LocalPyInstallerWheel
+    }
+    else {
+        & $PythonExe -m pip install "pyinstaller==$TargetPyInstallerVersion"
+    }
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to install PyInstaller $TargetPyInstallerVersion."
+    }
+}
+
 & $PythonExe -m PyInstaller `
     --noconfirm `
     --clean `
@@ -50,6 +66,11 @@ if ($VersionText -notlike "Python 3.8.*") {
 
 if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller build failed."
+}
+
+$LegacyExePath = Join-Path $DistPath "ISSParserTool.exe"
+if (Test-Path $LegacyExePath) {
+    Remove-Item -LiteralPath $LegacyExePath -Force
 }
 
 Write-Host "Build completed: $DistPath"
